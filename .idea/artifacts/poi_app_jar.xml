@@ -2,9 +2,6 @@
   <artifact type="jar" build-on-make="true" name="poi-app:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/poi_app_jar</output-path>
     <root id="archive" name="poi-app.jar">
-      <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
-      </element>
       <element id="module-output" name="poi-app" />
       <element id="extracted-dir" path="D:/Maven/.m2/repository/org/apache/xmlbeans/xmlbeans/3.0.1/xmlbeans-3.0.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="D:/Maven/.m2/repository/com/github/virtuald/curvesapi/1.04/curvesapi-1.04.jar" path-in-jar="/" />
