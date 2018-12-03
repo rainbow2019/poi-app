@@ -1,6 +1,5 @@
 package xin.zhaohong.updateTradeNo;
 
-import org.apache.commons.collections4.list.PredicatedList;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -36,28 +35,19 @@ public class Main {
     /**
      * 主函数
      *
+     * excel文件名格式为： 交易号更改-MMdd.xlsx
+     * txt文件名格式为：交易号更改-MM-dd HHmmss-处理后.txt
+     * MMdd必须
+     *
      * @param args
      */
     public static void main(String[] args) {
-        System.out.println("任务开始了......");
-        ArrayList<ArrayList> outLists = new ArrayList<ArrayList>();
+        System.out.println("........任务开始了......");
         //S1. 读取excel文件到sourceLists中;其中每一个元素代表一个交易号对
         ArrayList<ArrayList> sourceLists = readExcel();
-        ArrayList<String> list;
-        String oldTradeNo;
-        String newTradeNo;
-        int total = sourceLists.size();
-        for (int i = 0; i < total; i++) {
-            list = sourceLists.get(i);
-            oldTradeNo = list.get(0);
-            newTradeNo = list.get(1);
-            ArrayList<String> destList = new ArrayList<String>();
-            destList.add(generateSql(SQLTYPE.FIRST, oldTradeNo, newTradeNo));
-            destList.add(generateSql(SQLTYPE.SECOND, oldTradeNo, newTradeNo));
-            outLists.add(destList);
-        }
-        writeToTxt(outLists);
-        System.out.println("任务结束了......");
+        //S2. 拼接前后语句，写到txt文件中
+        writeToTxt(sourceLists);
+        System.out.println("........任务结束了......");
     }
 
     /**
@@ -65,45 +55,94 @@ public class Main {
      *
      * @return
      */
-    private static ArrayList<ArrayList> readExcel(){
+    private static ArrayList<ArrayList> readExcel() {
         String destFilePath = SOURCE_DIR + SOURCE_FILENAME_PREFIX + SDF2.format(new Date()) + SOURCE_FILENAME_SUFFIX;
         System.out.println("destFilePath = " + destFilePath);
         ArrayList<ArrayList> readLists = new ArrayList<ArrayList>();
         XSSFWorkbook xssfWorkbook;
+        XSSFSheet xssfSheet;
+        XSSFRow xssfRow;
+        XSSFCell cell;
         InputStream is;
         try {
             File file = new File(destFilePath);
-            if(!file.exists()) file.exists();
-            else System.out.println("文件存在");
+            if (!file.exists()) file.createNewFile();
+            else System.out.println("文件已经存在");
             is = new FileInputStream(file);
-            System.out.println("is流正常");
+            System.out.println("FileInputStream流创建成功");
             xssfWorkbook = new XSSFWorkbook(is);
-            System.out.println("创建Workbook正常");
-            XSSFSheet xssfSheet = xssfWorkbook.getSheetAt(0);
-//            while(true){
-                XSSFRow xssfRow = xssfSheet.getRow(0);
-                XSSFCell cell = xssfRow.getCell(0);
-                String value = cell.getStringCellValue();
-                System.out.println("cell = " + value);
+            System.out.println("创建XSSFWorkbook正常");
+            xssfSheet = xssfWorkbook.getSheetAt(0);
+            System.out.println("创建XSSFSheet正常;下面开始操作该Sheet!!!!!!!!!");
+            for (int start = 1; ; start++) {
+                xssfRow = xssfSheet.getRow(start);
+                cell = xssfRow.getCell(1);
+                String value1 = cell.getStringCellValue();
+                System.out.println("cell-1 = " + value1);
+                cell = xssfRow.getCell(2);
+                String value2 = cell.getStringCellValue();
+                System.out.println("cell-2 = " + value2);
+                if (null == value1 || "".equals(value1) || null == value2 || "".equals(value2)) break;
                 ArrayList perList = new ArrayList();
-               perList.add("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-               perList.add("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
-               readLists.add(perList);
-            perList = new ArrayList();
-            perList.add("AAAAAAAAAA1111111111111");
-            perList.add("BBBBBBBBBBBBBBBBBB2222222222222222222");
-            readLists.add(perList);
-//            }
-        }catch(Exception e){
-            System.out.println("读取Excel文件异常");
-            System.out.println("e = " + e);
+                perList.add(value1);
+                perList.add(value2);
+                readLists.add(perList);
+            }
+        } catch (FileNotFoundException fileNotFound) {
+            System.out.println("文件没有找到异常 : " + fileNotFound.toString());
+        } catch (Exception e) {
+            System.out.println("读取Excel文件异常 : " + e.toString());
         }
         return readLists;
     }
 
+    /**
+     * S2: 拼接sql语句，并直接写到txt文件中
+     *
+     * @param lists
+     */
+    public static void writeToTxt(ArrayList<ArrayList> lists) {
+        System.out.println("------------开始写文件了------------");
+        String destFilePath = DEST_DIR + DEST_FILENAME_PREFIX + SDF.format(new Date()) + DEST_FILENAME_SUFFIX;
+        System.out.println("destFilePath : " + destFilePath);
+        File file = new File(destFilePath);
+        ArrayList<String> list;
+        BufferedWriter bw;
+        String oldTradeNo;
+        String newTradeNo;
+        try {
+            if (file.exists()) file.delete();
+            file.createNewFile();
+            bw = new BufferedWriter(new FileWriter(destFilePath, true));
+            int total = lists.size();
+            String sql_1;
+            String sql_2;
+            for (int i = 0; i < total; i++) {
+                list = lists.get(i);
+                oldTradeNo = list.get(0);
+                newTradeNo = list.get(1);
+                sql_1 = generateSql(SQLTYPE.FIRST, oldTradeNo, newTradeNo);
+                bw.write(sql_1);
+                bw.newLine();
+                sql_2 = generateSql(SQLTYPE.SECOND, oldTradeNo, newTradeNo);
+                bw.write(sql_2);
+                bw.newLine();
+                bw.newLine();
+                System.out.println("sql_1 : " + sql_1);
+                System.out.println("sql_2 : " + sql_2+"\n");
+                bw.flush();
+            }
+            bw.close();
+        } catch (IOException ioEx) {
+            System.out.println("创建文件失败");
+            System.out.println("ioEx = " + ioEx);
+        }
+        System.out.println("---------写文件结束---------");
+    }
+
 
     /**
-     * 生成一个sql语句
+     * 辅助方法: 生成一个sql语句
      *
      * @param sqlType
      * @param oldTradeNo
@@ -118,39 +157,4 @@ public class Main {
         else
             return "";
     }
-
-    /**
-     * 写两个list到txt文件中
-     *
-     * @param lists
-     */
-    public static void writeToTxt(ArrayList<ArrayList> lists ) {
-        System.out.println("------------开始写文件了------------");
-        String destFilePath = DEST_DIR + DEST_FILENAME_PREFIX + SDF.format(new Date()) + DEST_FILENAME_SUFFIX;
-        System.out.println("destFilePath : " + destFilePath);
-        File file = new File(destFilePath);
-        ArrayList<String> list;
-        BufferedWriter bw;
-        try {
-            if (file.exists()) file.delete();
-            file.createNewFile();
-            bw = new BufferedWriter(new FileWriter(destFilePath, true));
-            int total = lists.size();
-            for (int i = 0; i < total; i++) {
-                list = lists.get(i);
-                bw.write(list.get(0));
-                bw.newLine();
-                bw.write(list.get(1));
-                bw.newLine();
-                bw.newLine();
-                bw.flush();
-            }
-            bw.close();
-        } catch (IOException ioEx) {
-            System.out.println("创建文件失败");
-            System.out.println("ioEx = " + ioEx);
-        }
-        System.out.println("---------写文件结束---------");
-    }
-
 }
