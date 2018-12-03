@@ -1,5 +1,6 @@
 package xin.zhaohong.updateTradeNo;
 
+import org.apache.commons.collections4.list.PredicatedList;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -24,17 +25,23 @@ public class Main {
     private static final String DEST_FILENAME_PREFIX = "交易号更改-";
     private static final String DEST_FILENAME_SUFFIX = "-处理后.txt";
 
-    private static final String firstSqlPre = "update risk_case_trade_info set trade_no = ";
-    private static final String secondSqlPre = "update risk_case_payment_trade_info set trade_no = ";
-    private static final String sqlWhere = " where trade_no = '";
+    private static final String firstSqlPre = "update risk_case_trade_info set trade_no = '";
+    private static final String secondSqlPre = "update risk_case_payment_trade_info set trade_no = '";
+    private static final String sqlWhere = "' where trade_no = '";
     private static final String TAIL = "';";
 
-    private static final SimpleDateFormat SDF = new SimpleDateFormat("MM-dd HH:mm:ss");
+    private static final SimpleDateFormat SDF = new SimpleDateFormat("MM-dd HHmmss");
     private static final SimpleDateFormat SDF2 = new SimpleDateFormat("MMdd");
 
+    /**
+     * 主函数
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         System.out.println("任务开始了......");
         ArrayList<ArrayList> outLists = new ArrayList<ArrayList>();
+        //S1. 读取excel文件到sourceLists中;其中每一个元素代表一个交易号对
         ArrayList<ArrayList> sourceLists = readExcel();
         ArrayList<String> list;
         String oldTradeNo;
@@ -44,7 +51,6 @@ public class Main {
             list = sourceLists.get(i);
             oldTradeNo = list.get(0);
             newTradeNo = list.get(1);
-            String secondSql = generateSql(SQLTYPE.SECOND, oldTradeNo, newTradeNo);
             ArrayList<String> destList = new ArrayList<String>();
             destList.add(generateSql(SQLTYPE.FIRST, oldTradeNo, newTradeNo));
             destList.add(generateSql(SQLTYPE.SECOND, oldTradeNo, newTradeNo));
@@ -54,6 +60,11 @@ public class Main {
         System.out.println("任务结束了......");
     }
 
+    /**
+     * S1：读取Excel文件，返回一个ArrayList<ArrayList>
+     *
+     * @return
+     */
     private static ArrayList<ArrayList> readExcel(){
         String destFilePath = SOURCE_DIR + SOURCE_FILENAME_PREFIX + SDF2.format(new Date()) + SOURCE_FILENAME_SUFFIX;
         System.out.println("destFilePath = " + destFilePath);
@@ -72,8 +83,16 @@ public class Main {
 //            while(true){
                 XSSFRow xssfRow = xssfSheet.getRow(0);
                 XSSFCell cell = xssfRow.getCell(0);
-                cell.getStringCellValue();
-                System.out.println("cell = " + cell);
+                String value = cell.getStringCellValue();
+                System.out.println("cell = " + value);
+                ArrayList perList = new ArrayList();
+               perList.add("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+               perList.add("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+               readLists.add(perList);
+            perList = new ArrayList();
+            perList.add("AAAAAAAAAA1111111111111");
+            perList.add("BBBBBBBBBBBBBBBBBB2222222222222222222");
+            readLists.add(perList);
 //            }
         }catch(Exception e){
             System.out.println("读取Excel文件异常");
@@ -81,6 +100,7 @@ public class Main {
         }
         return readLists;
     }
+
 
     /**
      * 生成一个sql语句
@@ -104,8 +124,8 @@ public class Main {
      *
      * @param lists
      */
-    public static void writeToTxt( ArrayList<ArrayList> lists ) {
-        System.out.println("开始写文件了......");
+    public static void writeToTxt(ArrayList<ArrayList> lists ) {
+        System.out.println("------------开始写文件了------------");
         String destFilePath = DEST_DIR + DEST_FILENAME_PREFIX + SDF.format(new Date()) + DEST_FILENAME_SUFFIX;
         System.out.println("destFilePath : " + destFilePath);
         File file = new File(destFilePath);
@@ -122,13 +142,15 @@ public class Main {
                 bw.newLine();
                 bw.write(list.get(1));
                 bw.newLine();
+                bw.newLine();
                 bw.flush();
             }
             bw.close();
         } catch (IOException ioEx) {
             System.out.println("创建文件失败");
+            System.out.println("ioEx = " + ioEx);
         }
-        System.out.println("写文件结束......");
+        System.out.println("---------写文件结束---------");
     }
 
 }
