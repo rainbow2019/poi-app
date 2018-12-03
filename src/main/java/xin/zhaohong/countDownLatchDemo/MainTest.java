@@ -1,3 +1,5 @@
+package xin.zhaohong.countDownLatchDemo;
+
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
